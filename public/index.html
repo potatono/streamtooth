@@ -23,39 +23,27 @@
     -->
     <script defer src="/__/firebase/init.js?useEmulator=false"></script>
     <script defer src="streamtooth.js"></script>
-
-    <style media="screen">
-      body { background: #333; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: #666; max-width: 720px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: inline-block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-
-      video { width: 480px; height: 270px; border:1px solid black; display:block; margin: 10px auto 10px; }
-    </style>
+    <link rel="stylesheet" type="text/css" href="index.css" media="screen">
   </head>
   <body>
-    <div id="message">
+    <div id="top">
       <h1>StreamTooth</h1>
-      <h2 id="peerId">Peer PeerId</h2>
-
-      
-
-
-      <video id="local_video" controls></video>
-      <div id="peers">
-        <h2>Connected Peers</h2>
+    </div>
+    <div id="main">
+      <div id="left">
+        <video id="main_video" controls></video>
+      </div>
+      <div id="right">
+        <div id="peers"></div>
+        <div id="chat"><div>Welcome to the chat!</div></div>
       </div>
 
     </div>
-    <div>(<a href="https://en.wikipedia.org/wiki/WebRTC">WebRTC</a> rebroadcasting)</div>
+
+
+    
+
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
         // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
@@ -113,24 +101,27 @@
         docs.forEach(async doc => { await doc.ref.delete(); })
       }
 
+      function addPeer(peerId) {
+        document.getElementById('peers').innerHTML += "<div>" + peerId + "</div>";
+      }
+
       async function connect() {
         console.log("Starting...");
         let db = await firebase.firestore();
         
-
-        let element = document.getElementById('local_video');
+        let element = document.getElementById('main_video');
 
         let st = new StreamTooth(db, channel, element);
         window.streamtooth = st;
 
         st.addEventListener("peerConnected", (ev) => { 
           console.log(ev);
-          document.getElementById('peers').innerHTML += "<div>" + ev.detail.peerId + "</div>";
+          addPeer(ev.detail.peerId);
         })
 
         st.startInputConnection();
 
-        document.getElementById('peerId').innerText = st.peerId;
+        addPeer(st.peerId);
       }
 
 </script>

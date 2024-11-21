@@ -24,10 +24,13 @@ class STConnection extends EventTarget {
     // IceCandidates
     #ice;
 
-    // Timer
+    // Data channel for chat and post-bootstrap messaging
+    #dc;
+
+    // Timer for determining when ice negotiations are over
     #timer;
 
-    // Type
+    // Type of connection offer/answer/whep_offer/whep_answer
     type;
 
     // Flag for whether we've sent iceComplete 
@@ -63,12 +66,14 @@ class STConnection extends EventTarget {
         this.remotePeerId = null;
         this.#iceCompleteDispatched = false;
         this.#pc = new RTCPeerConnection({ 'iceServers': iceServers });
+        
         this.#ice = [];
 
         console.log("Adding event listeners");
         this.#pc.addEventListener("icecandidate", (ev) => { this.registerCandidate(ev.candidate); });
         this.#pc.addEventListener("track", (ev) => { this.dispatchTrack(ev); });
         this.#pc.addEventListener("connectionstatechange", (ev) => {this.dispatchStateChange(ev); });
+        this.#pc.addEventListener("datachannel", (ev) => { this.setupDataChannel(ev.channel); })
     }
 
     // When IceCandidates come in we start/restart a timer, when the timer goes off
@@ -130,7 +135,10 @@ class STConnection extends EventTarget {
                 this.#pc.addTrack(track, stream);
             }
         }
-        
+        // Create the data channel now since we know we're sending an offer.
+        console.log("Creating data channel");
+        this.setupDataChannel(this.#pc.createDataChannel('chat'));
+
         var offer = await this.#pc.createOffer();
         await this.#pc.setLocalDescription(offer);
         
@@ -165,6 +173,19 @@ class STConnection extends EventTarget {
         for (var ice of msg.ice) {
             this.#pc.addIceCandidate(ice);
         }
+    }
+
+    setupDataChannel(channel) {
+        console.log("Setting up data channel");
+        if (!this.#dc)
+            this.#dc = channel;
+
+        this.#dc.addEventListener("open", (ev) => { console.log("Data channel open", ev); });
+        this.#dc.addEventListener("message", (ev) => { this.dispatchMessage(ev.data); });
+    }
+
+    dispatchMessage(msg) {
+        console.log(msg);
     }
 }
 

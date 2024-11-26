@@ -1,0 +1,137 @@
+
+body { 
+    background: #789EA5; 
+    color: rgba(0,0,0,0.87); 
+    font-family: Roboto, Helvetica, Arial, sans-serif; 
+    margin: 0; 
+    padding: 0;
+}
+
+#top {
+    height: 50px;
+    background: #B6CACE;
+    margin: 10px 10px;
+    border-radius: 3px;
+}
+
+#top h1 {
+    display: inline-block;
+    margin: 7px 10px;
+}
+
+#main { 
+    background: #B6CACE;
+    margin: 10px 10px 16px;
+    border-radius: 3px;
+    height: 85vh;
+    display:flex;
+}
+
+#left {
+    flex: 2;
+    min-height: 100px;
+    height: 100%;
+}
+
+#right {
+    flex: 1;
+    min-height: 100px;
+    height: 100%;
+}
+
+#chat {
+    background-color: #CEDCDE;
+    margin: 10px;
+    border-radius: 3px;
+
+    padding: 3px;
+    height: 300px;
+}
+
+#chat_messages {
+    height: 275px;
+}
+
+#chat_input {
+    width: 98%;
+}
+
+#peers {
+    border-radius: 3px;
+
+    height: 200px;
+    background-color: #CEDCDE;
+    margin: 10px;
+    padding: 3px;
+}
+
+#peers h3 {
+    margin-block-start: 0.25em;
+    margin-block-end: 0.25em;
+    font-size: 1em;
+    color: #cc9900;
+}
+
+#peers div {
+    font-size: 0.75em;
+}
+
+video { 
+    width: 100%;
+    aspect-ratio: 1.77778;    
+    display:block; 
+    
+}
+
+#main h2 { 
+    color: #ffa100; 
+    font-weight: bold; 
+    font-size: 16px; 
+    margin: 0 0 8px; 
+}
+
+#main h1 { 
+    font-size: 22px; 
+    font-weight: 300; 
+    color: rgba(0,0,0,0.6); 
+    margin: 0 0 16px;
+}
+
+#main p { 
+    line-height: 140%; 
+    margin: 16px 0 24px; 
+    font-size: 14px; 
+}
+
+#main a { 
+    display: inline-block; 
+    text-align: center; 
+    background: #039be5; 
+    text-transform: uppercase; 
+    text-decoration: none; 
+    color: white; 
+    padding: 16px; 
+    border-radius: 4px; 
+}
+
+#top, #main, #main a { 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); 
+}
+
+#load { 
+    color: rgba(0,0,0,0.4); 
+    text-align: center; 
+    font-size: 13px; 
+}
+
+
+@media (max-width: 600px) {
+    body, #message { 
+        margin-top: 0; 
+        background: white; 
+        box-shadow: none; 
+    }
+    body { 
+        border-top: 16px solid #ffa100; 
+    }
+}

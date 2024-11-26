@@ -22,7 +22,14 @@
       to avoid connecting the SDK to running emulators.
     -->
     <script defer src="/__/firebase/init.js?useEmulator=false"></script>
+    
+    <script defer src="stconnection.js"></script>
+    <script defer src="stpeercriteria.js"></script>
+    <script defer src="stpeers.js"></script>
+    <script defer src="stmessages.js"></script>
     <script defer src="streamtooth.js"></script>
+    
+
     <link rel="stylesheet" type="text/css" href="index.css" media="screen">
   </head>
   <body>
@@ -31,18 +38,20 @@
     </div>
     <div id="main">
       <div id="left">
-        <video id="main_video" controls></video>
+        <video id="main_video" controls autoplay muted></video>
+        <div>
+          <a href="javascript:streamtooth.disconnect();">Disconnect</a>
+          <a href="javascript:streamtooth.stop();">Stop</a>
+        </div>
       </div>
       <div id="right">
         <div id="peers"></div>
-        <div id="chat"><div>Welcome to the chat!</div></div>
+        <div id="chat">
+          <div id="chat_messages"></div>
+          <input id="chat_input" type="text">
+        </div>
       </div>
-
     </div>
-
-
-    
-
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -101,27 +110,86 @@
         docs.forEach(async doc => { await doc.ref.delete(); })
       }
 
-      function addPeer(peerId) {
-        document.getElementById('peers').innerHTML += "<div>" + peerId + "</div>";
+      //function addPeer(peerId) {
+      //  document.getElementById('peers').innerHTML += "<div>" + peerId + "</div>";
+      //}
+
+      function getPeerHtml(peerReport) {
+        html = "<div>";
+        
+        if (peerReport.remotePeerId) {
+          html += peerReport.remotePeerId;
+        }
+        else {
+          html += "[No peerId]";
+        }
+
+        html += " - ";
+
+        if (peerReport.state == "connected" && peerReport.fps) {
+          html += peerReport.width + "x" + peerReport.height + "@" + peerReport.fps
+        }
+        else {
+          html += peerReport.state;
+        }
+
+        html += "</div>";
+
+        return html;
+      }
+
+      function updatePeers(report) {
+        var html = "<h3>" + report.peerId + "</h3>";
+        html += "<h3>Input</h3>";
+
+        if (report.in) {
+          html += this.getPeerHtml(report.in);
+        }
+        
+        html += "<h3>Outputs</h3>";
+
+        for (var out of report.outs) {
+          html += this.getPeerHtml(out);
+        }
+
+        document.getElementById('peers').innerHTML = html;
+      }
+
+      function addMessage(msg) {
+        document.getElementById('chat_messages').innerHTML += "<div>" + msg.text + "</div>";
       }
 
       async function connect() {
         console.log("Starting...");
         let db = await firebase.firestore();
         
-        let element = document.getElementById('main_video');
+        let video = document.getElementById('main_video');
+        let chat_input = document.getElementById('chat_input');
 
-        let st = new StreamTooth(db, channel, element);
+        chat_input.addEventListener("keypress", (ev) => { if (ev.key == "Enter") {
+          var text = chat_input.value;
+          chat_input.value = "";
+          st.sendMessage(text);
+        }})
+
+        let st = new StreamTooth(db, channel, video);
         window.streamtooth = st;
 
-        st.addEventListener("peerConnected", (ev) => { 
-          console.log(ev);
-          addPeer(ev.detail.peerId);
-        })
+        //st.addEventListener("peerConnected", (ev) => { 
+        //  addPeer(ev.detail.peerId);
+        //});
+
+        st.addEventListener("status", (ev) => {
+          updatePeers(ev.detail);
+        });
+
+        st.addEventListener("chat", (ev) => {
+          addMessage(ev.detail);
+        });
 
         st.startInputConnection();
 
-        addPeer(st.peerId);
+        //addPeer(st.peerId);
       }
 
 </script>

@@ -60,10 +60,9 @@ class StreamTooth extends EventTarget {
         this.#inputStartTimestamp = (new Date()).getTime();
         this.#in = new STConnection();
 
-        this.#in.addEventListener("iceComplete", (ev) => { this.sendPeerDescription(ev); });
         this.#in.addEventListener("track", (ev) => { this.setStream(ev.detail.streams[0]); });
         this.#in.addEventListener("stateChange", (ev) => { this.updateConnectionState(this.#in); });
-        this.#in.addEventListener("datachannel", (ev) => { this.#peers.addDataChannel(ev.detail.dc); });
+        this.#in.addEventListener("datachannel", (ev) => { this.addDataChannel(this.#in, ev.detail.dc); });
 
         await this.#in.setup();
         
@@ -73,7 +72,9 @@ class StreamTooth extends EventTarget {
         this.#peers.listen();
 
         // Create offer for peer or whep proxy to answer.
-        await this.#in.createOffer();
+        var offer = await this.#in.createOffer();
+        this.#in.addEventListener("iceComplete", (ev) => { this.sendPeerDescription(ev, offer); });
+
 
         this.#in.startStats();
         this.startStatusTimer();
@@ -115,12 +116,15 @@ class StreamTooth extends EventTarget {
         }
 
         this.#out = new STConnection();
-        this.#out.addEventListener("iceComplete", (ev) => { this.sendPeerDescription(ev, offer); });
         this.#out.addEventListener("stateChange", (ev) => { this.updateConnectionState(this.#out); });
-        this.#out.addEventListener("datachannel", (ev) => { this.#peers.addDataChannel(ev.detail.dc); });
+        this.#out.addEventListener("datachannel", (ev) => { this.addDataChannel(this.#out, ev.detail.dc); });
 
         await this.#out.setup(this.#stream);
-        await this.connectOffer(offer);
+        var answer = await this.connectOffer(offer);
+
+        this.#out.addEventListener("iceComplete", (ev) => { this.sendPeerDescription(ev, offer, answer); });
+
+
 
         this.#out.startStats('outbound-rtp');
 
@@ -177,7 +181,10 @@ class StreamTooth extends EventTarget {
 
     chooseAnswer() {
         if (this.#collectedAnswers.length > 0) {
-            this.connectAnswer(this.#collectedAnswers[0]);
+            var msgs = this.#collectedAnswers;
+            msgs.forEach((msg) => { msg.answer = JSON.parse(msg.text); });
+            msgs.sort((a, b) => a.answer.load - b.answer.load);
+            this.connectAnswer(msgs[0]);
             this.#collectedAnswers = [];
         }
         else {
@@ -190,9 +197,7 @@ class StreamTooth extends EventTarget {
      * @param {*} answer 
      */
       async connectAnswer(msg) {
-  
-
-        var answer = JSON.parse(msg.text);
+        var answer = msg.answer || JSON.parse(msg.text);
         this.#peers.addConnection(msg);
         await this.#in.connectRemote(answer);
     }
@@ -201,10 +206,14 @@ class StreamTooth extends EventTarget {
         var offer = JSON.parse(msg.text);
         this.#peers.addConnection(msg);
         await this.#out.connectRemote(offer);
-        await this.#out.createAnswer(this.#stream);
+        var answer = await this.#out.createAnswer(this.#stream);
+
+        answer['load'] = this.#outs.length;
+
+        return answer;
     }
 
-    async sendPeerDescription(ev, pendingOffer=null) {
+    async sendPeerDescription(ev, offer, answer) {
         // We receive a complete list of iceCandidates when creating an offer or answer
         // We need to vary the message depending on whether this event was triggered
         // by an inbound or outbound connection.
@@ -212,15 +221,33 @@ class StreamTooth extends EventTarget {
 
         // STConnection has type of offer, answer, whep_offer, whep_answer..
         var msgType = stc.type;
-        console.log(`pendingOffer ${pendingOffer}`);
 
-        var to = pendingOffer && pendingOffer.from;
-        var replyTo = pendingOffer && pendingOffer.id;
+        // If we are sending an answer, then include the offers from and id.
+        if (answer) {
+            var to = offer.from;
+            var replyTo = offer.id;
+        }
 
         console.log(`Sending peerDescription for ${msgType}`);
 
-        var doc = this.#peers.send(msgType, ev.detail.desc, to, replyTo);
+        // We need the description as it exists after ICE negotiation is completed.
+        // We'll copy over the updated sdp from the event's description.
+        var desc = answer || offer;
+        desc.sdp = ev.detail.desc.sdp;
+        
+        var doc = this.#peers.send(msgType, desc, to, replyTo);
         stc.connectionId = replyTo || doc.id;
+    }
+
+    addDataChannel(stc, dc) {
+        // If the data channel is to the origin then it's not useful.  Close an remove it.
+        if (stc.remotePeerId == "origin") {
+            console.log("Closing dataChannel because it's connected to the origin");
+            dc.close();
+        }
+        else {
+            this.#peers.addDataChannel(dc);
+        }
     }
 
     async updateConnectionState(stc) {
@@ -282,7 +309,8 @@ class StreamTooth extends EventTarget {
             report.in && 
             report.in.state == "connected" &&
             report.in.lastReceivedTimestamp &&
-            report.in.lastReceivedTimestamp < report.in.timestamp - 1000
+            report.in.lastReceivedTimestamp < report.in.timestamp - 1000 &&
+            this.#inputStartTimestamp < (new Date()).getTime() - 5000
         );
     }
 
@@ -291,10 +319,9 @@ class StreamTooth extends EventTarget {
         var result = (
             this.#in &&
             this.#in.connectionState == "new" &&
+            this.#in.remoteDescription == null && 
             this.#inputStartTimestamp < (new Date()).getTime() - this.#checkInputTime
         )
-
-        this.#checkInputTime = result ? Math.min(this.#checkInputTime * 1.5, 15000) : 3000;
 
         return result;
     }
@@ -309,7 +336,11 @@ class StreamTooth extends EventTarget {
 
         if (this.checkInputIsIgnored()) {
             console.log(`Input connection was ignored for ${this.#checkInputTime}ms Resetting.`);
+            this.#checkInputTime = this.#checkInputTime * 1.5;
             this.restartInput();
+        }
+        else if (this.#in.connectionState == "connected") {
+            this.#checkInputTime = 3000;
         }
 
         this.cleanOutputs();

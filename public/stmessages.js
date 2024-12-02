@@ -127,11 +127,16 @@ class STMessages extends EventTarget {
     }
 
     sendMessageToCollection(message) {
-        const validTypes = { "offer":1, "answer":1 };
+        // const validTypes = { "offer":1, "answer":1 };
 
-        if (message.type in validTypes) {
-            this.#col.add(this.toFirestore(message));
-        }
+        // if (message.type in validTypes) {
+        //     this.#col.add(this.toFirestore(message));
+        // }
+
+        // We'll go ahead and send chat through firebase for now since we can end
+        // up with multiple connections to the origin and they won't exchange chat otherwise.
+        // Once we have a true P2P network with data only channels this will not be necessary.
+        this.#col.add(this.toFirestore(message));
     }
 
     sendMessage(message) {

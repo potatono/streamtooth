@@ -45,6 +45,10 @@ class STConnection extends EventTarget {
         return this.#pc.localDescription;
     }
 
+    get remoteDescription() {
+        return this.#pc.remoteDescription;
+    }
+
     get connectionState() {
         return (this.#pc && this.#pc.connectionState) || "disconnected";
     }

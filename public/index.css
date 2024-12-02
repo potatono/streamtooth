@@ -19,12 +19,19 @@ body {
     margin: 7px 10px;
 }
 
+/*
 #main { 
     background: #B6CACE;
     margin: 10px 10px 16px;
     border-radius: 3px;
     height: 85vh;
     display:flex;
+}
+    */
+
+div.bottom {
+    position: absolute;
+    bottom: 15px;
 }
 
 #left {
@@ -40,12 +47,9 @@ body {
 }
 
 #chat {
-    background-color: #CEDCDE;
     margin: 10px;
     border-radius: 3px;
-
     padding: 3px;
-    height: 300px;
 }
 
 #chat_messages {
@@ -53,14 +57,15 @@ body {
 }
 
 #chat_input {
-    width: 98%;
+    display: inline-block;
+    position: absolute;
+    bottom: 15px;
+    left: 10px;
+    
 }
 
 #peers {
     border-radius: 3px;
-
-    height: 200px;
-    background-color: #CEDCDE;
     margin: 10px;
     padding: 3px;
 }
@@ -69,7 +74,7 @@ body {
     margin-block-start: 0.25em;
     margin-block-end: 0.25em;
     font-size: 1em;
-    color: #cc9900;
+    color: dodgerblue;
 }
 
 #peers div {
@@ -80,41 +85,17 @@ video {
     width: 100%;
     aspect-ratio: 1.77778;    
     display:block; 
-    
 }
 
-#main h2 { 
-    color: #ffa100; 
-    font-weight: bold; 
-    font-size: 16px; 
-    margin: 0 0 8px; 
-}
-
-#main h1 { 
-    font-size: 22px; 
-    font-weight: 300; 
-    color: rgba(0,0,0,0.6); 
-    margin: 0 0 16px;
-}
-
-#main p { 
-    line-height: 140%; 
-    margin: 16px 0 24px; 
-    font-size: 14px; 
-}
-
-#main a { 
+button.app { 
     display: inline-block; 
     text-align: center; 
-    background: #039be5; 
+    background: dodgerblue; 
     text-transform: uppercase; 
     text-decoration: none; 
     color: white; 
-    padding: 16px; 
+    padding: 8px; 
     border-radius: 4px; 
-}
-
-#top, #main, #main a { 
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); 
 }
 

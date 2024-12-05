@@ -19,8 +19,11 @@ class STConnection extends EventTarget {
     // Timer for determining when ice negotiations are over
     #timer;
 
-    // Type of connection offer/answer/whep_offer/whep_answer
+    // Type of connection offer/answer
     type;
+
+    // Context of connection, video or data
+    context;
 
     // Flag for whether we've sent iceComplete 
     // (some browsers take a long time to send the final null iceCandidate)
@@ -34,6 +37,9 @@ class STConnection extends EventTarget {
 
     #stats;
     #statsTimer;
+
+    #offerMessage;
+    #answerMessage;
     
     constructor() { 
         super();
@@ -47,6 +53,14 @@ class STConnection extends EventTarget {
 
     get remoteDescription() {
         return this.#pc.remoteDescription;
+    }
+
+    get offerMessage() {
+        return this.#offerMessage;
+    }
+
+    get answerMessage() {
+        return this.#answerMessage;
     }
 
     get connectionState() {
@@ -69,9 +83,11 @@ class STConnection extends EventTarget {
     }
 
     async setup(stream) {
-        const iceServers = await this.getIceServers();
+        this.connectionId = (new Date()).getTime();
         this.remotePeerId = null;
         this.#iceCompleteDispatched = false;
+
+        const iceServers = await this.getIceServers();
         this.#pc = new RTCPeerConnection({ 'iceServers': iceServers });
         
         this.#ice = [];
@@ -86,6 +102,10 @@ class STConnection extends EventTarget {
             for (var track of stream.getTracks()) {
                 this.#pc.addTrack(track, stream);
             }
+            this.context = this.context || 'video';
+        }
+        else {
+            this.context = this.context || 'data';
         }
     }
 
@@ -140,14 +160,19 @@ class STConnection extends EventTarget {
     //     }
     // }
 
-    async createOffer() {
+    async createOffer(context="video") {
         this.type = "offer";
+        this.context = context;
 
-        this.#pc.addTransceiver('video',{'direction':'sendrecv'});
-        this.#pc.addTransceiver('audio',{'direction':'sendrecv'});
+        if (context == "video") {
+            this.#pc.addTransceiver('video',{'direction':'sendrecv'});
+            this.#pc.addTransceiver('audio',{'direction':'sendrecv'});
+        }
+
         this.setupDataChannel(this.#pc.createDataChannel(this.peerId));
 
         var offer = await this.#pc.createOffer();
+        offer.context = context;
 
         await this.#pc.setLocalDescription(offer);
 
@@ -164,8 +189,33 @@ class STConnection extends EventTarget {
         return answer;
     }
 
-    async connectRemote(description) {
+    async connectRemote(message) {
+        var description;
+
+        this.remotePeerId = message.from;
+
+        if (message.type == "offer") {
+            this.#offerMessage = message;
+            description = message.offer || JSON.parse(message.text);
+        }
+        else if (message.type == "answer") {
+            this.#answerMessage = message;
+            // chooseAnswer in main class already parses to get load parameters.
+            description = message.answer || JSON.parse(message.text);
+        }
+        else {
+            console.log(`Invalid message type in connectRemote ${message.type}`);
+            return;
+        }
+
         await this.#pc.setRemoteDescription(description);
+    }
+
+    setMessage(type, message) {
+        if (type == "offer")
+            this.#offerMessage = message;
+        else if (type == "answer")
+            this.#answerMessage = message;
     }
 
     setupDataChannel(channel) {
@@ -210,24 +260,6 @@ class STConnection extends EventTarget {
                 if (report.type == type && report.kind == 'video') {
                     this.#stats = report;
 
-                    // // TODO Should this happen here?
-                    // if (report.lastPacketReceivedTimestamp && 
-                    //     report.lastPacketReceivedTimestamp < (new Date()).getTime()-1000) 
-                    // {
-                    //     console.log("lastPacketReceived over a second ago.  Resetting connection.")
-                    //     this.#pc.close();
-                    //     this.dispatchStateChange();
-                    // }
-                    
-                    // console.log(
-                    //     this.type,
-                    //     "frameWidth", report.frameWidth,
-                    //     "frameHeight", report.frameHeight,
-                    //     "fps", report.framesPerSecond, 
-                    //     "packetsReceived", report.packetsReceived, 
-                    //     "lastPacketReceivedTimestamp", report.lastPacketReceivedTimestamp,
-                    // )
-
                     return report;
                 }
             });
@@ -245,7 +277,10 @@ class STConnection extends EventTarget {
             peerId: this.peerId,
             remotePeerId: this.remotePeerId,
             type: this.type,
-            state: this.connectionState
+            context: this.context,
+            state: this.connectionState,
+            offerMessage: this.#offerMessage,
+            answerMessage: this.#answerMessage
         };
 
         if (this.#stats) {

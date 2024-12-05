@@ -113,7 +113,7 @@
           html += "[No peerId]";
         }
 
-        html += " - ";
+        html += " [" + peerReport.type + ":" + peerReport.context + "] - ";
 
         if (peerReport.state == "connected" && peerReport.fps) {
           html += peerReport.width + "x" + peerReport.height + "@" + peerReport.fps
@@ -122,23 +122,26 @@
           html += peerReport.state;
         }
 
+        if (peerReport.offerMessage) {
+          html += ` <a href="javascript:showOffer(${peerReport.connectionId})">offer</a>`
+        }
+        
+        if (peerReport.answerMessage) {
+          html += ` <a href="javascript:showAnswer(${peerReport.connectionId})">answer</a>`
+        }
+
         html += "</div>";
 
         return html;
       }
 
       function updatePeers(report) {
-        var html = "<h3>" + report.peerId + "</h3>";
-        html += "<h3>Input</h3>";
-
-        if (report.in) {
-          html += this.getPeerHtml(report.in);
-        }
+        var html = "<h3>Peer ID: " + report.peerId + "</h3>";
         
-        html += "<h3>Outputs</h3>";
+        html += "<h3>Peers</h3>";
 
-        for (var out of report.outs) {
-          html += this.getPeerHtml(out);
+        for (var peer of report.peers) {
+          html += this.getPeerHtml(peer);
         }
 
         document.getElementById('peers').innerHTML = html;
@@ -169,6 +172,7 @@
         //});
 
         st.addEventListener("status", (ev) => {
+          window.lastPeerReport = ev.detail;
           updatePeers(ev.detail);
         });
 
@@ -252,6 +256,52 @@
         )
       )
     ));
+  }
+
+  function getPeerReport(connectionId) {
+    var report = window.lastPeerReport;
+    for (var peer of report.peers) {
+      if (peer.connectionId == connectionId) {
+        return peer;
+      }
+    }
+  }
+  function showOffer(connectionId) {
+    var peerReport = getPeerReport(connectionId);
+
+    if (peerReport) {
+      showMessage(peerReport.offerMessage);
+    }
+  }
+
+  function showAnswer(connectionId) {
+    var peerReport = getPeerReport(connectionId);
+
+    if (peerReport) {
+      showMessage(peerReport.answerMessage);
+    }
+  }
+
+  function showMessage(msg) {
+    const { div, span, p, pre } = van.tags;
+
+    var width = window.innerWidth / 2;
+    var height = window.innerHeight / 2;
+    var x = width / 2;
+    var y = height / 2;
+
+    var data = JSON.parse(msg.text);
+    
+    van.add(document.body, FloatingWindow(
+      {
+        title: msg.type,
+        x: x, y: y, width: width, height: height,
+        childrenContainerStyleOverrides: { padding: 0 },
+        headerColor: "white"
+      },
+      div({style:`overflow:scroll; width:${width}px; height:${height-20}px`}, pre(data.sdp))
+    ));
+
   }
 </script>
 </body>

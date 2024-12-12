@@ -1,308 +1,106 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>StreamTooth</title>
-    
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/10.13.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/10.13.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/10.13.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/10.13.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/10.13.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/10.13.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/10.13.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/10.13.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/10.13.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/10.13.0/firebase-performance-compat.js"></script>
-    <!-- 
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StreamTooth</title>
+
+  <!-- update the version number as needed -->
+  <script defer src="/__/firebase/10.13.0/firebase-app-compat.js"></script>
+  <!-- include only the Firebase features as you need -->
+  <script defer src="/__/firebase/10.13.0/firebase-auth-compat.js"></script>
+  <script defer src="/__/firebase/10.13.0/firebase-database-compat.js"></script>
+  <script defer src="/__/firebase/10.13.0/firebase-firestore-compat.js"></script>
+  <script defer src="/__/firebase/10.13.0/firebase-functions-compat.js"></script>
+  <script defer src="/__/firebase/10.13.0/firebase-messaging-compat.js"></script>
+  <script defer src="/__/firebase/10.13.0/firebase-storage-compat.js"></script>
+  <script defer src="/__/firebase/10.13.0/firebase-analytics-compat.js"></script>
+  <script defer src="/__/firebase/10.13.0/firebase-remote-config-compat.js"></script>
+  <script defer src="/__/firebase/10.13.0/firebase-performance-compat.js"></script>
+  <!-- 
       initialize the SDK after all desired features are loaded, set useEmulator to false
       to avoid connecting the SDK to running emulators.
     -->
-    <script defer src="/__/firebase/init.js?useEmulator=false"></script>
-    
-
-    <script src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.2.nomodule.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanjs-ui@0.11.4/dist/van-ui.nomodule.min.js"></script>
+  <script defer src="/__/firebase/init.js?useEmulator=false"></script>
 
 
-    <script defer src="stconnection.js"></script>
-    <script defer src="stpeercriteria.js"></script>
-    <script defer src="stpeers.js"></script>
-    <script defer src="stmessages.js"></script>
-    <script defer src="streamtooth.js"></script>
-    
+  <script src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.2.nomodule.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanjs-ui@0.11.4/dist/van-ui.nomodule.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="index.css" media="screen">
-  </head>
-  <body>
-    
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+  <script defer src="stconnection.js"></script>
+  <script defer src="stpeercriteria.js"></script>
+  <script defer src="stpeers.js"></script>
+  <script defer src="stmessages.js"></script>
+  <script defer src="stui.js"></script>
+  <script defer src="streamtooth.js"></script>
 
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-        } catch (e) {
-          console.error(e);
+  <link rel="stylesheet" type="text/css" href="index.css" media="screen">
+</head>
+
+<body>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        let app = firebase.app();
+        let features = [
+          'auth',
+          'database',
+          'firestore',
+          'functions',
+          'messaging',
+          'storage',
+          'analytics',
+          'remoteConfig',
+          'performance',
+        ].filter(feature => typeof app[feature] === 'function');
+      } catch (e) {
+        console.error(e);
+      }
+
+      // This fires on page load whether you're logged in or not
+      firebase.auth().onAuthStateChanged((user) => {
+
+        // If not logged in, then signInAnonymously
+        if (!user) {
+          firebase.auth().signInAnonymously()
+            .then(() => {
+              console.log("Signed in anonymously");
+              // Kick off StreamTooth
+              connect();
+            })
+            .catch((err) => { console.error(err); });
         }
-
-        firebase.auth().signInAnonymously()
-          .then(() => { console.log("Signed In"); })
-          .catch((err) => { console.error(err); });
-        
-        firebase.auth().onAuthStateChanged((user) => {
-          console.log("Uid is "+ user.uid);
+        else {
+          console.log("Uid is " + user.uid);
+          // Kick off StreamTooth
           connect();
-        });
-
-        setupUI();
+        }
       });
-</script>
-<script>
-      const channel = window.location.hash.replace(/^#/,"") || "test";
-
-      async function clear() {
-        console.log("Clearing..");
-        let db = await firebase.firestore();
-        let col = db.collection("channels")
-            .doc(channel).collection("peers");
-        var docs = await col.get()
-
-        docs.forEach(async doc => { await doc.ref.delete(); })
-      }
-
-      //function addPeer(peerId) {
-      //  document.getElementById('peers').innerHTML += "<div>" + peerId + "</div>";
-      //}
-
-      function getPeerHtml(peerReport) {
-        html = "<div>";
-        
-        if (peerReport.remotePeerId) {
-          html += peerReport.remotePeerId;
-        }
-        else {
-          html += "[No peerId]";
-        }
-
-        html += " [" + peerReport.type + ":" + peerReport.context + "] - ";
-
-        if (peerReport.state == "connected" && peerReport.fps) {
-          html += peerReport.width + "x" + peerReport.height + "@" + peerReport.fps
-        }
-        else {
-          html += peerReport.state;
-        }
-
-        if (peerReport.offerMessage) {
-          html += ` <a href="javascript:showOffer(${peerReport.connectionId})">offer</a>`
-        }
-        
-        if (peerReport.answerMessage) {
-          html += ` <a href="javascript:showAnswer(${peerReport.connectionId})">answer</a>`
-        }
-
-        html += "</div>";
-
-        return html;
-      }
-
-      function updatePeers(report) {
-        var html = "<h3>Peer ID: " + report.peerId + "</h3>";
-        
-        html += "<h3>Peers</h3>";
-
-        for (var peer of report.peers) {
-          html += this.getPeerHtml(peer);
-        }
-
-        document.getElementById('peers').innerHTML = html;
-      }
-
-      function addMessage(msg) {
-        document.getElementById('chat_messages').innerHTML += "<div>" + msg.text + "</div>";
-      }
-
-      async function connect() {
-        console.log("Starting...");
-        let db = await firebase.firestore();
-        
-        let video = document.getElementById('main_video');
-        let chat_input = document.getElementById('chat_input');
-
-        chat_input.addEventListener("keypress", (ev) => { if (ev.key == "Enter") {
-          var text = chat_input.value;
-          chat_input.value = "";
-          st.sendMessage(text);
-        }})
-
-        let st = new StreamTooth(db, channel, video);
-        window.streamtooth = st;
-
-        //st.addEventListener("peerConnected", (ev) => { 
-        //  addPeer(ev.detail.peerId);
-        //});
-
-        st.addEventListener("status", (ev) => {
-          window.lastPeerReport = ev.detail;
-          updatePeers(ev.detail);
-        });
-
-        st.addEventListener("chat", (ev) => {
-          addMessage(ev.detail);
-        });
-
-        st.startInputConnection();
-
-        //addPeer(st.peerId);
-      }
+    });
+  </script>
+  <script>
+    const channel = window.location.hash.replace(/^#/, "") || "test";
+    var hasConnected = false;
 
 
-  function setupUI() {
-    const { div, span, video, input, p, button } = van.tags;
-    var titleHeight = 39;
-    var buffer = 5;
-    var width = window.innerWidth - buffer;
-    var height = window.innerHeight - buffer;
-    var videoX = buffer;
-    var videoY = buffer;
-    var videoWidth = width * 0.666 - buffer * 2;
-    var videoHeight = videoWidth / 1.777 + titleHeight;
-    var chatX = videoX + videoWidth + buffer;
-    var chatY = videoY;
-    var chatWidth = width * 0.333 - buffer;
-    var chatHeight = videoHeight;
+    async function connect() {
+      if (hasConnected)
+        return;
 
-    van.add(document.body, FloatingWindow(
-      {
-        title: "StreamTooth Development Stream",
-        closed, x: videoX, y: videoY, width: videoWidth, height: videoHeight,
-        childrenContainerStyleOverrides: { padding: 0 },
-        headerColor: "white"
-      },
-      div(
-        span({
-          class: "vanui-window-cross",
-          style: "position: absolute; top: 8px; right: 8px;cursor: pointer;",
-          onclick: () => closed.val = true,
-        }, "×"),
-        video({id:"main_video", controls:"controls", autoplay:"autoplay", muted:"muted" })
-      )
-    ));
+      hasConnected = true;
 
-    van.add(document.body, FloatingWindow(
-      {
-        closed, x: chatX, y: chatY, width: chatWidth, height: chatHeight,
-        childrenContainerStyleOverrides: { padding: 0 },
-      },
-      div(
-        span({
-          class: "vanui-window-cross",
-          style: "position: absolute; top: 8px; right: 8px;cursor: pointer;",
-          onclick: () => closed.val = true,
-        }, "×"),
+      console.log("Starting...");
+      let db = await firebase.firestore();
 
-        Tabs(
-          {
-            style: "width: 100%;",
-            tabButtonActiveColor: "white",
-            tabButtonBorderStyle: "none",
-            tabButtonRowColor: "lightblue",
-            tabButtonRowStyleOverrides: {height: "2.5rem"},
-            tabButtonStyleOverrides: {height: "100%"},
-          },
-          {
-            Peers: div(
-              div({id:"peers"}),
-              div({class:"bottom"},
-                button({class:"app", onclick:() => { streamtooth.disconnect(); }},"Disconnect"),
-                button({class:"app", onclick:() => { streamtooth.stop(); }}, "Stop")
-              )
-            ),        
-            Chat: div({id:"chat"}, 
-              div({id:"chat_messages"}), 
-              input({id:"chat_input", style:`width:${chatWidth-25}px`})
-            ),
-            About: p("The stream information will go here.")
-          }
-        )
-      )
-    ));
-  }
+      let st = new StreamTooth(db, channel);
+      window.streamtooth = st;
 
-  function getPeerReport(connectionId) {
-    var report = window.lastPeerReport;
-    for (var peer of report.peers) {
-      if (peer.connectionId == connectionId) {
-        return peer;
-      }
+      st.setupUI();
+      st.startInputConnection();
     }
-  }
-  function showOffer(connectionId) {
-    var peerReport = getPeerReport(connectionId);
-
-    if (peerReport) {
-      showMessage(peerReport.offerMessage);
-    }
-  }
-
-  function showAnswer(connectionId) {
-    var peerReport = getPeerReport(connectionId);
-
-    if (peerReport) {
-      showMessage(peerReport.answerMessage);
-    }
-  }
-
-  function showMessage(msg) {
-    const { div, span, p, pre } = van.tags;
-
-    var width = window.innerWidth / 2;
-    var height = window.innerHeight / 2;
-    var x = width / 2;
-    var y = height / 2;
-
-    var data = JSON.parse(msg.text);
-    
-    van.add(document.body, FloatingWindow(
-      {
-        title: msg.type,
-        x: x, y: y, width: width, height: height,
-        childrenContainerStyleOverrides: { padding: 0 },
-        headerColor: "white"
-      },
-      div({style:`overflow:scroll; width:${width}px; height:${height-20}px`}, pre(data.sdp))
-    ));
-
-  }
-</script>
+  </script>
 </body>
+
 </html>

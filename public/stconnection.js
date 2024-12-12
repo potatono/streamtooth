@@ -2,7 +2,12 @@
 // is reached, then triggers a event iceComplete to indicate having a full collection.
 class STConnection extends EventTarget {
     static iceServerRestUrl = "https://jplt.metered.live/api/v1/turn/credentials?apiKey=859b39cc0d353464345498af68d84df33fd5";
-    static iceServers;
+    static iceServers = [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:3478" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:3478" },
+    ];
 
     // Connection Id of this connection, currently the id of the offer message
     connectionId;
@@ -40,8 +45,8 @@ class STConnection extends EventTarget {
 
     #offerMessage;
     #answerMessage;
-    
-    constructor() { 
+
+    constructor() {
         super();
         // TODO Pass explicitly.
         this.peerId = STPeers.peerId;
@@ -70,7 +75,7 @@ class STConnection extends EventTarget {
     get dataChannel() {
         return this.#dc;
     }
-    
+
     async getIceServers() {
         if (!STConnection.iceServers) {
             const response = await fetch(STConnection.iceServerRestUrl);
@@ -89,15 +94,15 @@ class STConnection extends EventTarget {
 
         const iceServers = await this.getIceServers();
         this.#pc = new RTCPeerConnection({ 'iceServers': iceServers });
-        
+
         this.#ice = [];
 
         this.#pc.addEventListener("icecandidate", (ev) => { this.registerCandidate(ev.candidate); });
         this.#pc.addEventListener("track", (ev) => { this.dispatchTrack(ev); });
-        this.#pc.addEventListener("connectionstatechange", (ev) => {this.dispatchStateChange(ev); });
+        this.#pc.addEventListener("connectionstatechange", (ev) => { this.dispatchStateChange(ev); });
         this.#pc.addEventListener("datachannel", (ev) => { this.setupDataChannel(ev.channel); })
 
-        if (stream) {    
+        if (stream) {
             console.log("Adding stream tracks..");
             for (var track of stream.getTracks()) {
                 this.#pc.addTrack(track, stream);
@@ -119,17 +124,19 @@ class STConnection extends EventTarget {
             clearTimeout(this.#timer);
 
         // TODO Don't love this
-        const fireEvent = () => { 
+        const fireEvent = () => {
             if (!this.#iceCompleteDispatched) {
                 this.#iceCompleteDispatched = true;
                 console.log("Dispatching iceComplete");
-                
-                this.dispatchEvent(new CustomEvent("iceComplete", { "detail": { 
-                    "ice": this.#ice, 
-                    "desc": this.#pc.localDescription,
-                    "pc": this.#pc, 
-                    "stc": this 
-                }}));
+
+                this.dispatchEvent(new CustomEvent("iceComplete", {
+                    "detail": {
+                        "ice": this.#ice,
+                        "desc": this.#pc.localDescription,
+                        "pc": this.#pc,
+                        "stc": this
+                    }
+                }));
             }
         };
 
@@ -145,12 +152,12 @@ class STConnection extends EventTarget {
     }
 
     dispatchTrack(ev) {
-        this.dispatchEvent(new CustomEvent("track", { "detail": ev })); 
+        this.dispatchEvent(new CustomEvent("track", { "detail": ev }));
     }
 
     dispatchStateChange(ev) {
         //this.#remoteDescriptionSet = false;
-        this.dispatchEvent(new CustomEvent("stateChange", { "detail": ev}));
+        this.dispatchEvent(new CustomEvent("stateChange", { "detail": ev }));
     }
 
     // getConnectionInfo() {
@@ -160,13 +167,13 @@ class STConnection extends EventTarget {
     //     }
     // }
 
-    async createOffer(context="video") {
+    async createOffer(context = "video") {
         this.type = "offer";
         this.context = context;
 
         if (context == "video") {
-            this.#pc.addTransceiver('video',{'direction':'sendrecv'});
-            this.#pc.addTransceiver('audio',{'direction':'sendrecv'});
+            this.#pc.addTransceiver('video', { 'direction': 'sendrecv' });
+            this.#pc.addTransceiver('audio', { 'direction': 'sendrecv' });
         }
 
         this.setupDataChannel(this.#pc.createDataChannel(this.peerId));
@@ -254,8 +261,8 @@ class STConnection extends EventTarget {
         }
     }
 
-    requestStats(type='inbound-rtp') {
-        this.#pc.getStats().then((stats) => { 
+    requestStats(type = 'inbound-rtp') {
+        this.#pc.getStats().then((stats) => {
             stats.forEach((report) => {
                 if (report.type == type && report.kind == 'video') {
                     this.#stats = report;
@@ -289,7 +296,7 @@ class STConnection extends EventTarget {
             report['height'] = this.#stats.frameHeight;
             report['packets'] = this.#stats.packetsReceived;
             report['timestamp'] = this.#stats.timestamp;
-            report['lastReceivedTimestamp'] = this.#stats.lastPacketReceivedTimestamp; 
+            report['lastReceivedTimestamp'] = this.#stats.lastPacketReceivedTimestamp;
             report['stats'] = this.#stats;
         }
 

@@ -11,23 +11,22 @@ class StreamTooth extends EventTarget {
 
     // Inbound STConnection
     #in = null;
-    
+
     // Pending Outbound STConnection
     #out = null;
 
     // Local stream
     #stream = null;
 
-    // Video element for display
-    #element = null;
+    #ui = null;
 
     #statusTimer;
     #inputStartTimestamp;
 
-    constructor(db, channel, element) {
+    constructor(db, channel) {
         super();
         this.#peers = new STPeers(db, channel);
-        this.#element = element;
+        this.#ui = new STUI();
     }
 
     get peerId() { return this.#peers.peerId; }
@@ -35,13 +34,12 @@ class StreamTooth extends EventTarget {
     setStream(stream) {
         console.log(`Updating stream to ${stream}`);
         this.#stream = stream;
-        if (this.#element) 
-            this.#element.srcObject = stream;
+        this.#ui.video.srcObject = stream;
     }
 
     // Starts local stream from camera/microphone
     async startInputMedia() {
-        var constraints = { audio:true, video:true };
+        var constraints = { audio: true, video: true };
         this.setStream(await navigator.mediaDevices.getUserMedia(constraints));
 
         this.#peers.addEventListener("offer", (ev) => { this.answerOffer(ev.detail); });
@@ -63,7 +61,7 @@ class StreamTooth extends EventTarget {
 
         await this.#in.setup();
         this.#peers.addConnection(this.#in);
-        
+
         this.#peers.addEventListener("offer", (ev) => { this.answerOffer(ev.detail); });
         this.#peers.addEventListener("chat", (ev) => { this.dispatchChat(ev); });
         this.#peers.addEventListener("answer", (ev) => { this.collectAnswer(ev.detail); });
@@ -90,7 +88,7 @@ class StreamTooth extends EventTarget {
         // Reset the input connection
         await this.#in.disconnect();
         await this.#in.setup();
-    
+
         // Create a new offer to connect.
         await this.#in.createOffer();
 
@@ -116,7 +114,7 @@ class StreamTooth extends EventTarget {
         var offerData = JSON.parse(offerMsg.text);
         // If we're doing a data only connection don't include a stream
         var stream = offerData.context == "data" ? null : this.#stream;
-        
+
         var stc = new STConnection();
         stc.addEventListener("stateChange", (ev) => { this.updateConnectionState(stc); });
         stc.addEventListener("datachannel", (ev) => { this.addDataChannel(stc, ev.detail.dc); });
@@ -141,7 +139,7 @@ class StreamTooth extends EventTarget {
         // Start the stats collection if it's a media stream
         if (offerData.context != "data") {
             stc.startStats('outbound-rtp');
-            this.#out = stc;            
+            this.#out = stc;
         }
 
         // The answer will be sent when iceComplete event is triggered.
@@ -163,10 +161,10 @@ class StreamTooth extends EventTarget {
             return;
         }
 
-        this.#collectedAnswers.push({'stc':stc, 'msg':msg});
+        this.#collectedAnswers.push({ 'stc': stc, 'msg': msg });
         console.log(`Collected answer from ${msg.from}. ${this.#collectedAnswers.length} answers collected.`)
 
-        if (this.#answerCollectionTimer) 
+        if (this.#answerCollectionTimer)
             window.clearTimeout(this.#answerCollectionTimer);
 
         this.#answerCollectionTimer = window.setTimeout(() => { this.chooseAnswer(); }, 1000);
@@ -221,7 +219,7 @@ class StreamTooth extends EventTarget {
         // We'll copy over the updated sdp from the event's description.
         var desc = answer || offer;
         desc.sdp = ev.detail.desc.sdp;
-        
+
         var doc = this.#peers.send(msgType, desc, to, replyTo);
         //stc.connectionId = replyTo || doc.id;
         stc.setMessage(msgType, doc);
@@ -261,8 +259,8 @@ class StreamTooth extends EventTarget {
             else {
                 console.log("I don't need remotePeerId set in connected status");
             }
-        
-            this.dispatchEvent(new CustomEvent("peerConnected", { "detail": { "peerId": peerId }}));
+
+            this.dispatchEvent(new CustomEvent("peerConnected", { "detail": { "peerId": peerId } }));
         }
     }
 
@@ -291,7 +289,7 @@ class StreamTooth extends EventTarget {
      */
     checkInputIsStale(report) {
         return (
-            report.in && 
+            report.in &&
             report.in.state == "connected" &&
             report.in.lastReceivedTimestamp &&
             report.in.lastReceivedTimestamp < report.in.timestamp - 1000 &&
@@ -308,11 +306,16 @@ class StreamTooth extends EventTarget {
         var result = (
             this.#in &&
             this.#in.connectionState == "new" &&
-            this.#in.remoteDescription == null && 
+            this.#in.remoteDescription == null &&
             this.#inputStartTimestamp < (new Date()).getTime() - this.#checkInputTime
         )
 
         return result;
+    }
+
+    dispatchStatus(ev) {
+        this.dispatchEvent(new CustomEvent("status", ev));
+        this.#ui.handleStatus(ev);
     }
 
     #lastStatusMessageTime = (new Date()).getTime();
@@ -362,7 +365,7 @@ class StreamTooth extends EventTarget {
             'peers': []
         };
 
-        this.#peers.forEach((stc) => { report.peers.push(stc.getReport())});
+        this.#peers.forEach((stc) => { report.peers.push(stc.getReport()) });
 
         return report;
     }
@@ -380,7 +383,7 @@ class StreamTooth extends EventTarget {
         this.#peers.cleanConnections();
 
         // Send the status event to anyone listening.
-        this.dispatchEvent(new CustomEvent("status", { "detail": report }));
+        this.dispatchStatus({ "detail": report });
 
         // Send a status message periodically
         this.dispatchStatusMessage(report);
@@ -393,8 +396,8 @@ class StreamTooth extends EventTarget {
     }
 
     dispatchChat(ev) {
-        var message = ev.detail;
         this.dispatchEvent(new CustomEvent("chat", ev));
+        this.#ui.handleChatInbound(ev);
     }
 
     getUniquePeers(report) {
@@ -409,8 +412,8 @@ class StreamTooth extends EventTarget {
         return Object.keys(uniqueIds);
     }
 
-     // Starts local stream from PeerConnection
-     async startPeerDataConnection(peerId) {
+    // Starts local stream from PeerConnection
+    async startPeerDataConnection(peerId) {
         console.log(`Starting data-only connection to ${peerId}`);
         var stc = new STConnection();
 
@@ -420,7 +423,7 @@ class StreamTooth extends EventTarget {
         await stc.setup();
         // I don't need this, it's done in connectRemote
         //stc.remotePeerId = peerId;
-        
+
         var offer = await stc.createOffer("data");
         stc.addEventListener("iceComplete", (ev) => { this.sendPeerDescription(ev, offer, null, peerId); });
 
@@ -446,5 +449,10 @@ class StreamTooth extends EventTarget {
         var report = JSON.parse(msg.text);
 
         this.connectNewPeers(report);
+    }
+
+    setupUI() {
+        this.#ui.setup();
+        this.#ui.addEventListener("message", (ev) => { this.sendMessage(ev.detail); });
     }
 }

@@ -37,7 +37,7 @@ class STMessages extends EventTarget {
 
     stop() {
         this.#stopListen();
-        
+
         for (var peerId in this.#dcs) {
             this.#dcs[peerId].close();
         }
@@ -47,13 +47,13 @@ class STMessages extends EventTarget {
         console.log("Adding data channel");
         this.#dcs.push(dc);
 
-        dc.addEventListener("closing", (ev) => { 
+        dc.addEventListener("closing", (ev) => {
             console.log("DataChannel is closing.");
-            this.removeDataChannel(ev.channel); 
+            this.removeDataChannel(ev.channel);
         });
-        dc.addEventListener("close", (ev) => { 
+        dc.addEventListener("close", (ev) => {
             console.log("DataChannel has closed.");
-            this.removeDataChannel(ev.channel); 
+            this.removeDataChannel(ev.channel);
         });
         dc.addEventListener("message", (ev) => {
             var msg = JSON.parse(ev.data);
@@ -69,7 +69,7 @@ class STMessages extends EventTarget {
     checkIsNotDuplicate(message) {
         var key = message.id;
 
-        if (key in this.#receiptLookup) 
+        if (key in this.#receiptLookup)
             return false;
 
         var newLength = this.#receiptQueue.push(key);
@@ -83,17 +83,17 @@ class STMessages extends EventTarget {
         return true;
     }
 
-    receivedMessage(message, dataChannel=null) {
+    receivedMessage(message, dataChannel = null) {
         if (this.checkIsNotDuplicate(message)) {
             if (message.to == STMessages.All || message.to == this.#peerId) {
                 this.dispatchEvent(new CustomEvent("message", { "detail": message }));
             }
-        
+
             this.sendMessageToDataChannels(message, dataChannel);
         }
     }
 
-    sendMessageToDataChannels(message, excludedChannel=null) {
+    sendMessageToDataChannels(message, excludedChannel = null) {
         for (var dc of this.#dcs) {
             if (dc.readyState == "open" && dc != excludedChannel) {
                 console.log("Sending via dataChannel", dc.label);
@@ -127,10 +127,10 @@ class STMessages extends EventTarget {
     }
 
     sendMessageToCollection(message) {
-        const validTypes = { "offer":1, "answer":1, "status":1 };
+        const validTypes = { "offer": 1, "answer": 1, "status": 1 };
 
         if (message.type in validTypes) {
-             this.#col.add(this.toFirestore(message));
+            this.#col.add(this.toFirestore(message));
         }
     }
 
@@ -145,7 +145,7 @@ class STMessages extends EventTarget {
         return (new Date()).getTime();
     }
 
-    send(text, type="chat", to=null, replyTo=null) {
+    send(text, type = "chat", to = null, replyTo = null) {
         var id = this.createMessageId();
         to = to || STMessages.All;
 
@@ -157,6 +157,10 @@ class STMessages extends EventTarget {
             "text": text,
             "replyTo": replyTo
         };
+
+        if (type == "chat") {
+            message.displayName = firebase.auth().currentUser.displayName
+        }
 
         this.sendMessage(message);
 

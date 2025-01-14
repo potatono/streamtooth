@@ -1,4 +1,4 @@
-class STUI extends EventTarget {
+class STUI extends STBase {
     #lastPeerReport = null;
 
     constructor() {

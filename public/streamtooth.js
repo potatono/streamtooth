@@ -5,7 +5,7 @@
 // Add actual logic for peer selection
 // We need to think about race conditions for answering offers.  What if two peers try to answer the same one?
 
-class StreamTooth extends EventTarget {
+class StreamTooth extends STBase {
     // Peers
     #peers = null;
 
@@ -25,6 +25,8 @@ class StreamTooth extends EventTarget {
 
     constructor(db, channel) {
         super();
+
+        this.info("Starting...");
         this.#peers = new STPeers(db, channel);
         this.#ui = new STUI();
     }
@@ -32,7 +34,7 @@ class StreamTooth extends EventTarget {
     get peerId() { return this.#peers.peerId; }
 
     setStream(stream) {
-        console.log(`Updating stream to ${stream}`);
+        this.info(`Updating stream to ${stream}`);
         this.#stream = stream;
         this.#ui.video.srcObject = stream;
     }
@@ -99,15 +101,15 @@ class StreamTooth extends EventTarget {
     }
 
     async answerOffer(offerMsg) {
-        console.log(`Answering incoming offer from ${offerMsg.from}`);
+        this.info(`Answering incoming offer from ${offerMsg.from}`);
 
         if (offerMsg.from == this.#peers.peerId) {
-            console.log(`Offer is from me. Ignoring..`);
+            this.info(`Offer is from me. Ignoring..`);
             return;
         }
 
         if (this.#in.connectionState != "connected") {
-            console.log(`Cannot answer offer, My input is not connected.`);
+            this.info(`Cannot answer offer, My input is not connected.`);
             return;
         }
 
@@ -153,16 +155,16 @@ class StreamTooth extends EventTarget {
         var stc = this.#peers.getConnectionByOfferId(msg.replyTo);
 
         if (stc == null) {
-            console.log(`Cannot collect answer the replyTo doesn't match any connection`);
+            this.info(`Cannot collect answer the replyTo doesn't match any connection`);
             return;
         }
         else if (stc.connectionState != "new" && stc.connectionState != "connecting") {
-            console.log(`Cannot collect answer, connection state is ${stc.connectionState}`);
+            this.info(`Cannot collect answer, connection state is ${stc.connectionState}`);
             return;
         }
 
         this.#collectedAnswers.push({ 'stc': stc, 'msg': msg });
-        console.log(`Collected answer from ${msg.from}. ${this.#collectedAnswers.length} answers collected.`)
+        this.info(`Collected answer from ${msg.from}. ${this.#collectedAnswers.length} answers collected.`)
 
         if (this.#answerCollectionTimer)
             window.clearTimeout(this.#answerCollectionTimer);
@@ -188,7 +190,7 @@ class StreamTooth extends EventTarget {
             this.#collectedAnswers = [];
         }
         else {
-            console.log(`No answers available after timeout.`);
+            this.warn(`No answers available after timeout.`);
         }
     }
 
@@ -213,7 +215,7 @@ class StreamTooth extends EventTarget {
             to = peerId;
         }
 
-        console.log(`Sending peerDescription for ${msgType}`);
+        this.info(`Sending peerDescription for ${msgType}`);
 
         // We need the description as it exists after ICE negotiation is completed.
         // We'll copy over the updated sdp from the event's description.
@@ -228,7 +230,7 @@ class StreamTooth extends EventTarget {
     addDataChannel(stc, dc) {
         // If the data channel is to the origin then it's not useful.  Close an remove it.
         if (stc.remotePeerId == "origin") {
-            console.log("Closing dataChannel because it's connected to the origin");
+            this.info("Closing dataChannel because it's connected to the origin");
             dc.close();
         }
         else {
@@ -238,15 +240,15 @@ class StreamTooth extends EventTarget {
 
     async updateConnectionState(stc) {
         var newState = stc && stc.connectionState;
-        console.log(`New connection state: ${newState}`);
+        this.info(`New connection state: ${newState}`);
 
         if (newState == "disconnected" || newState == "failed" || newState == "closed") {
             if (stc == this.#in) {
-                console.log(`Input peer disconnected, re-establishing input connection`);
+                this.info(`Input peer disconnected, re-establishing input connection`);
                 await this.restartInput();
             }
             else {
-                console.log(`Output peer disconnected, removing.`);
+                this.info(`Output peer disconnected, removing.`);
                 this.#peers.removeConnection(stc);
             }
         }
@@ -257,7 +259,7 @@ class StreamTooth extends EventTarget {
                 stc.remotePeerId = peerId;
             }
             else {
-                console.log("I don't need remotePeerId set in connected status");
+                this.info("I don't need remotePeerId set in connected status");
             }
 
             this.dispatchEvent(new CustomEvent("peerConnected", { "detail": { "peerId": peerId } }));
@@ -265,12 +267,12 @@ class StreamTooth extends EventTarget {
     }
 
     disconnect() {
-        console.log(`Disconnecting all downstream viewers..`);
+        this.info(`Disconnecting all downstream viewers..`);
         this.#peers.disconnect('video', 'answer');
     }
 
     stop() {
-        console.log(`Stopping all connections.`);
+        this.info(`Stopping all connections.`);
         this.#peers.stop();
 
         if (this.#statusTimer) {
@@ -331,12 +333,18 @@ class StreamTooth extends EventTarget {
         }
     }
 
+    dispatchLogMessage() {
+        if (this.shouldShipLogs()) {
+            this.#peers.sendLogs(this.createLogShipment());
+        }
+    }
+
     /**
      * Resets the input connection if the stats say it hasn't updated in awhile
      */
     fixStaleInputs(report) {
         if (this.checkInputIsStale(report)) {
-            console.log(`Input connection has gone stale.  Resetting.`);
+            this.info(`Input connection has gone stale.  Resetting.`);
             this.restartInput();
         }
     }
@@ -346,7 +354,7 @@ class StreamTooth extends EventTarget {
      */
     fixIgnoredInput() {
         if (this.checkInputIsIgnored()) {
-            console.log(`Input connection was ignored for ${this.#checkInputTime}ms Resetting.`);
+            this.info(`Input connection was ignored for ${this.#checkInputTime}ms Resetting.`);
             this.#checkInputTime = this.#checkInputTime * 1.5;
             this.restartInput();
         }
@@ -387,6 +395,9 @@ class StreamTooth extends EventTarget {
 
         // Send a status message periodically
         this.dispatchStatusMessage(report);
+
+        // Check and ship logs if necessary
+        this.dispatchLogMessage();
     }
 
     sendMessage(text) {
@@ -414,7 +425,7 @@ class StreamTooth extends EventTarget {
 
     // Starts local stream from PeerConnection
     async startPeerDataConnection(peerId) {
-        console.log(`Starting data-only connection to ${peerId}`);
+        this.info(`Starting data-only connection to ${peerId}`);
         var stc = new STConnection();
 
         stc.addEventListener("stateChange", (ev) => { this.updateConnectionState(stc); });
@@ -445,7 +456,7 @@ class StreamTooth extends EventTarget {
     }
 
     collectPeerStatus(msg) {
-        console.log(`Got status from ${msg.from}`)
+        this.info(`Got status from ${msg.from}`)
         var report = JSON.parse(msg.text);
 
         this.connectNewPeers(report);

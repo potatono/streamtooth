@@ -1,6 +1,6 @@
 // Abtracts PeerConnection and IceCandidates.  Collects IceCandidates until a threshold timeout
 // is reached, then triggers a event iceComplete to indicate having a full collection.
-class STConnection extends EventTarget {
+class STConnection extends STBase {
     static iceServerRestUrl = "https://jplt.metered.live/api/v1/turn/credentials?apiKey=859b39cc0d353464345498af68d84df33fd5";
     static iceServers = [
         { urls: "stun:stun.l.google.com:19302" },
@@ -103,7 +103,7 @@ class STConnection extends EventTarget {
         this.#pc.addEventListener("datachannel", (ev) => { this.setupDataChannel(ev.channel); })
 
         if (stream) {
-            console.log("Adding stream tracks..");
+            this.info("Adding stream tracks..");
             for (var track of stream.getTracks()) {
                 this.#pc.addTrack(track, stream);
             }
@@ -117,7 +117,7 @@ class STConnection extends EventTarget {
     // When IceCandidates come in we start/restart a timer, when the timer goes off
     // we assume no more candidates are coming and fire the iceComplete pseudo-event
     registerCandidate(candidate) {
-        //console.log("Got ice candidate..");
+        //this.info("Got ice candidate..");
         this.#ice.push(candidate);
 
         if (this.#timer)
@@ -127,7 +127,7 @@ class STConnection extends EventTarget {
         const fireEvent = () => {
             if (!this.#iceCompleteDispatched) {
                 this.#iceCompleteDispatched = true;
-                console.log("Dispatching iceComplete");
+                this.debug("Dispatching iceComplete");
 
                 this.dispatchEvent(new CustomEvent("iceComplete", {
                     "detail": {
@@ -142,7 +142,7 @@ class STConnection extends EventTarget {
 
         // If we have an empty candidate then that signals end of candidates
         if (!candidate) {
-            console.log("ICE Candidate was null, firing complete");
+            this.info("ICE Candidate was null, firing complete");
             fireEvent();
         }
         else {
@@ -211,7 +211,7 @@ class STConnection extends EventTarget {
             description = message.answer || JSON.parse(message.text);
         }
         else {
-            console.log(`Invalid message type in connectRemote ${message.type}`);
+            this.error(`Invalid message type in connectRemote ${message.type}`);
             return;
         }
 
@@ -226,7 +226,7 @@ class STConnection extends EventTarget {
     }
 
     setupDataChannel(channel) {
-        console.log("Setting up data channel");
+        this.info("Setting up data channel");
         if (!this.#dc)
             this.#dc = channel;
 
@@ -234,7 +234,7 @@ class STConnection extends EventTarget {
     }
 
     dispatchDataChannel() {
-        console.log("STC dispatchDataChannel")
+        this.debug("STC dispatchDataChannel")
         this.dispatchEvent(new CustomEvent("datachannel", { "detail": { 'dc': this.#dc, 'stc': this } }));
     }
 
@@ -274,7 +274,7 @@ class STConnection extends EventTarget {
     }
 
     startStats(type) {
-        console.log("Starting stats collection");
+        this.info("Starting stats collection");
         this.#statsTimer = window.setInterval((type) => { this.requestStats(type) }, 1000, type);
     }
 

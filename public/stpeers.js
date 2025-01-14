@@ -1,4 +1,4 @@
-class STPeers extends EventTarget {
+class STPeers extends STBase {
     static peerId = null;
 
     // Firestore
@@ -72,6 +72,10 @@ class STPeers extends EventTarget {
         return this.#messages.send(JSON.stringify(report), "status");
     }
 
+    sendLogs(logs) {
+        return this.#messages.send(JSON.stringify(logs), "logs");
+    }
+
     addConnection(stc) {
         this.#connections.push(stc);
         this.#criteria.load = this.#connections.length;
@@ -82,14 +86,14 @@ class STPeers extends EventTarget {
     removeConnection(stc) {
         var idx = this.#connections.indexOf(stc);
         this.#connections.splice(idx, 1);
-        console.log(`Removed ${stc.remotePeerId} from connections.`,
+        this.info(`Removed ${stc.remotePeerId} from connections.` +
             `There are now ${this.#connections.length}.`);
     }
 
     cleanConnections() {
         for (var i=0; i<this.#connections.length; i++) {
             if (this.#connections[i].connectionState == "failed") {
-                console.log(`Found lingering failed connection.  Cleaning.`);
+                this.info(`Found lingering failed connection.  Cleaning.`);
                 this.#connections.splice(i, 1);
                 i--;
             }
@@ -101,7 +105,7 @@ class STPeers extends EventTarget {
             var con = this.#connections[con];
 
             if (con.context==context && con.type==type) {
-                console.log(`Disconnecting ${con.remotePeerId}.`);
+                this.info(`Disconnecting ${con.remotePeerId}.`);
                 con.disconnect();
                 this.#connections.splice(i, 1);
                 i--;
@@ -147,7 +151,7 @@ class STPeers extends EventTarget {
 
     getConnectionById(connectionId) {
         for (var con of this.#connections) {
-            console.log(`${con.connectionId} == ${connectionId}`);
+            this.debug(`${con.connectionId} == ${connectionId}`);
             if (con.connectionId == connectionId)
                 return con;
         }

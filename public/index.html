@@ -7,28 +7,23 @@
   <title>StreamTooth</title>
 
   <!-- update the version number as needed -->
-  <script defer src="/__/firebase/10.13.0/firebase-app-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-app-compat.js"></script>
   <!-- include only the Firebase features as you need -->
-  <script defer src="/__/firebase/10.13.0/firebase-auth-compat.js"></script>
-  <script defer src="/__/firebase/10.13.0/firebase-database-compat.js"></script>
-  <script defer src="/__/firebase/10.13.0/firebase-firestore-compat.js"></script>
-  <script defer src="/__/firebase/10.13.0/firebase-functions-compat.js"></script>
-  <script defer src="/__/firebase/10.13.0/firebase-messaging-compat.js"></script>
-  <script defer src="/__/firebase/10.13.0/firebase-storage-compat.js"></script>
-  <script defer src="/__/firebase/10.13.0/firebase-analytics-compat.js"></script>
-  <script defer src="/__/firebase/10.13.0/firebase-remote-config-compat.js"></script>
-  <script defer src="/__/firebase/10.13.0/firebase-performance-compat.js"></script>
-  <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-  <script defer src="/__/firebase/init.js?useEmulator=false"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-auth-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-database-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-firestore-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-functions-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-messaging-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-storage-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-analytics-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-remote-config-compat.js"></script>
+  <script defer src="/__/firebase/11.1.0/firebase-performance-compat.js"></script>
 
 
   <script src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.2.nomodule.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vanjs-ui@0.11.4/dist/van-ui.nomodule.min.js"></script>
 
-
+  <script defer src="stbase.js"></script>
   <script defer src="stconnection.js"></script>
   <script defer src="stpeercriteria.js"></script>
   <script defer src="stpeers.js"></script>
@@ -43,7 +38,23 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       try {
-        let app = firebase.app();
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+          apiKey: "AIzaSyCDJrtvNAr4Uc-Fg-89i05k7-nQ68BDOk4",
+          authDomain: "stream-tooth.firebaseapp.com",
+          projectId: "stream-tooth",
+          storageBucket: "stream-tooth.firebasestorage.app",
+          messagingSenderId: "907241132448",
+          appId: "1:907241132448:web:3f6a7812984c988e5794c5",
+          measurementId: "G-5STRD18BBS"
+        };
+  
+        // Initialize Firebase
+        let app = firebase.initializeApp(firebaseConfig);
+        let analytics = firebase.analytics();
+      
         let features = [
           'auth',
           'database',
@@ -91,7 +102,7 @@
 
       hasConnected = true;
 
-      console.log("Starting...");
+      //console.log("Starting...");
       let db = await firebase.firestore();
 
       let st = new StreamTooth(db, channel);

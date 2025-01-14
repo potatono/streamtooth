@@ -1,4 +1,4 @@
-class STPeerCriteria {
+class STPeerCriteria extends STBase {
     static MAX_LOCATION_ACCURACY = 3000; // 3 km Maximum Location Accuracy
     static RADIUS_EARTH = 6371.0;
     static DISTANCE_SCORE = 1;  // 1 per m
@@ -16,6 +16,8 @@ class STPeerCriteria {
     load = 0;
 
     constructor(data) {
+        super();
+
         if (data) {
             this.location = data.location;
             this.isp = data.isp;
@@ -80,7 +82,7 @@ class STPeerCriteria {
             var newcoords = this.getLocationAtDistance(coords, distance, bearing);
             newcoords.accuracy += distance;
 
-            console.log("Reduced accuracy of", coords.accuracy, "m to", newcoords.accuracy + "m.");
+            this.info(`Reduced accuracy of ${coords.accuracy}m to ${newcoords.accuracy}m.`);
 
             return newcoords;
         }
@@ -94,7 +96,7 @@ class STPeerCriteria {
         navigator.geolocation.getCurrentPosition(
             (loc) => { this.location = this.reduceAccuracy(loc.coords) },
             (err) => { 
-                console.log("Could not get location data.", err); 
+                this.error(`Could not get location data. ${err}`); 
                 this.location = { latitude: 0.0, longitude: 0.0, accuracy: 1000000 }    
             }
         )
@@ -119,14 +121,14 @@ class STPeerCriteria {
     async initServiceProvider() {
         var response = await fetch("https://ipinfo.io/json");
         var data = await response.json();
-        console.log(data);
+        this.debug(data);
         this.isp = data['org'];
 
         // If Geolocation API fails use this as a backup.
         if (this.location == null || (this.location.latitude == 0 && 
             this.location.longitude == 0)) 
         {
-            console.log("Falling back to location data from ipinfo.");
+            this.info("Falling back to location data from ipinfo.");
             var loc = data['loc'].split(",").map(Number);
             this.location = { latitude: loc[0], longitude: loc[1], accuracy: 10000 };
         }
@@ -150,7 +152,7 @@ class STPeerCriteria {
             (c1.isp == c2.isp) * STPeerCriteria.ISP_SCORE
         );
         
-        console.log("v1=",v1,"v2=",v2);
+        this.debug(`v1=${v1} v2=${v2}`);
         return v1 - v2;
     }
 }

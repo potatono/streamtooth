@@ -1,4 +1,4 @@
-class STMessages extends EventTarget {
+class STMessages extends STBase {
     static All = "*";
 
     // RTCDataChannels
@@ -44,15 +44,15 @@ class STMessages extends EventTarget {
     }
 
     addDataChannel(dc) {
-        console.log("Adding data channel");
+        this.info("Adding data channel");
         this.#dcs.push(dc);
 
         dc.addEventListener("closing", (ev) => {
-            console.log("DataChannel is closing.");
+            this.info("DataChannel is closing.");
             this.removeDataChannel(ev.channel);
         });
         dc.addEventListener("close", (ev) => {
-            console.log("DataChannel has closed.");
+            this.info("DataChannel has closed.");
             this.removeDataChannel(ev.channel);
         });
         dc.addEventListener("message", (ev) => {
@@ -94,9 +94,12 @@ class STMessages extends EventTarget {
     }
 
     sendMessageToDataChannels(message, excludedChannel = null) {
+        if (message.type == "logs")
+            return;
+
         for (var dc of this.#dcs) {
             if (dc.readyState == "open" && dc != excludedChannel) {
-                console.log("Sending via dataChannel", dc.label);
+                this.info(`Sending via dataChannel ${dc.label}`);
                 dc.send(JSON.stringify(message));
             }
         }
@@ -127,7 +130,7 @@ class STMessages extends EventTarget {
     }
 
     sendMessageToCollection(message) {
-        const validTypes = { "offer": 1, "answer": 1, "status": 1 };
+        const validTypes = { "offer": 1, "answer": 1, "status": 1, "logs":1 };
 
         if (message.type in validTypes) {
             this.#col.add(this.toFirestore(message));
@@ -135,7 +138,7 @@ class STMessages extends EventTarget {
     }
 
     sendMessage(message) {
-        console.log("Sending message", message.id, message.type, message.from, message.to);
+        this.info(`Sending message ${message.id} ${message.type} ${message.from} ${message.to}`);
         this.sendMessageToDataChannels(message);
         this.sendMessageToCollection(message);
     }

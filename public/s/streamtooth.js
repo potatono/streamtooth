@@ -228,7 +228,7 @@ class StreamTooth extends STBase {
     }
 
     addDataChannel(stc, dc) {
-        // If the data channel is to the origin then it's not useful.  Close an remove it.
+        // If the data channel is to the origin then it's not useful.  Close and remove it.
         if (stc.remotePeerId == "origin") {
             this.info("Closing dataChannel because it's connected to the origin");
             dc.close();
@@ -411,55 +411,55 @@ class StreamTooth extends STBase {
         this.#ui.handleChatInbound(ev);
     }
 
-    getUniquePeers(report) {
-        var uniqueIds = {};
-        uniqueIds[report.peerId] = 1;
+    // getUniquePeers(report) {
+    //     var uniqueIds = {};
+    //     uniqueIds[report.peerId] = 1;
 
-        for (var peer of report.peers) {
-            if (peer.remotePeerId)
-                uniqueIds[peer.remotePeerId] = 1;
-        }
+    //     for (var peer of report.peers) {
+    //         if (peer.remotePeerId)
+    //             uniqueIds[peer.remotePeerId] = 1;
+    //     }
 
-        return Object.keys(uniqueIds);
-    }
+    //     return Object.keys(uniqueIds);
+    // }
 
     // Starts local stream from PeerConnection
-    async startPeerDataConnection(peerId) {
-        this.info(`Starting data-only connection to ${peerId}`);
-        var stc = new STConnection();
+    // async startPeerDataConnection(peerId) {
+    //     this.info(`Starting data-only connection to ${peerId}`);
+    //     var stc = new STConnection();
 
-        stc.addEventListener("stateChange", (ev) => { this.updateConnectionState(stc); });
-        stc.addEventListener("datachannel", (ev) => { this.addDataChannel(stc, ev.detail.dc); });
+    //     stc.addEventListener("stateChange", (ev) => { this.updateConnectionState(stc); });
+    //     stc.addEventListener("datachannel", (ev) => { this.addDataChannel(stc, ev.detail.dc); });
 
-        await stc.setup();
-        // I don't need this, it's done in connectRemote
-        //stc.remotePeerId = peerId;
+    //     await stc.setup();
+    //     // I don't need this, it's done in connectRemote
+    //     //stc.remotePeerId = peerId;
 
-        var offer = await stc.createOffer("data");
-        stc.addEventListener("iceComplete", (ev) => { this.sendPeerDescription(ev, offer, null, peerId); });
+    //     var offer = await stc.createOffer("data");
+    //     stc.addEventListener("iceComplete", (ev) => { this.sendPeerDescription(ev, offer, null, peerId); });
 
-        this.#peers.addConnection(stc);
+    //     this.#peers.addConnection(stc);
 
-        return stc;
-    }
+    //     return stc;
+    // }
 
-    connectNewPeers(report) {
-        var peers = this.getUniquePeers(report);
-        for (var peer of peers) {
-            if (peer == this.peerId)
-                continue;
+    // connectNewPeers(report) {
+    //     var peers = this.getUniquePeers(report);
+    //     for (var peer of peers) {
+    //         if (peer == this.peerId)
+    //             continue;
 
-            if (!this.#peers.isConnectedTo(peer)) {
-                this.startPeerDataConnection(peer);
-            }
-        }
-    }
+    //         if (!this.#peers.isConnectedTo(peer)) {
+    //             this.startPeerDataConnection(peer);
+    //         }
+    //     }
+    // }
 
     collectPeerStatus(msg) {
         this.info(`Got status from ${msg.from}`)
-        var report = JSON.parse(msg.text);
 
-        this.connectNewPeers(report);
+        //var report = JSON.parse(msg.text);
+        //this.connectNewPeers(report);
     }
 
     setupUI() {

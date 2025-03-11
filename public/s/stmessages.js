@@ -130,16 +130,18 @@ class STMessages extends STBase {
     }
 
     sendMessageToCollection(message) {
-        const validTypes = { "offer": 1, "answer": 1, "status": 1, "logs":1 };
+        //const validTypes = { "offer": 1, "answer": 1, "status": 1, "logs":1 };
 
-        if (message.type in validTypes) {
-            this.#col.add(this.toFirestore(message));
-        }
+        //if (message.type in validTypes) {
+        //    this.#col.add(this.toFirestore(message));
+        //}
+
+        this.#col.add(this.toFirestore(message));
     }
 
     sendMessage(message) {
         this.info(`Sending message ${message.id} ${message.type} ${message.from} ${message.to}`);
-        this.sendMessageToDataChannels(message);
+        //this.sendMessageToDataChannels(message);
         this.sendMessageToCollection(message);
     }
 

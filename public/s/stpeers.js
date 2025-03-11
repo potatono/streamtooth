@@ -97,6 +97,12 @@ class STPeers extends STBase {
                 this.#connections.splice(i, 1);
                 i--;
             }
+
+            if (this.#connections[i].isConnectingAndStale()) {
+                this.info(`Found stale "connecting" connection.  Cleaning.`);
+                this.#connections[i].disconnect();
+                this.#connections.splice(i, 1);
+            }
         }
     }
 

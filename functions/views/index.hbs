@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{channel}} - StreamTooth</title>
+
+  <link rel="alternate" type="application/json+oembed" href="https://s2th.tv/oembed/?url=https%3A%2F%2Fs2th.tv%2F{{channel}}&format=json">
+
+  <!-- update the version number as needed -->
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-app-compat.js"></script>
+  <!-- include only the Firebase features as you need -->
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-database-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-functions-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-messaging-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-storage-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-analytics-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-remote-config-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-performance-compat.js"></script>
+
+
+  <script src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.2.nomodule.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanjs-ui@0.11.4/dist/van-ui.nomodule.min.js"></script>
+
+  <script defer src="/s/stbase.js?v=202501141115"></script>
+  <script defer src="/s/stconnection.js?v=202501141115"></script>
+  <script defer src="/s/stpeercriteria.js?v=202501141115"></script>
+  <script defer src="/s/stpeers.js?v=202501141115"></script>
+  <script defer src="/s/stmessages.js?v=202501141115"></script>
+  <script defer src="/s/stui.js?v=202501141115"></script>
+  <script defer src="/s/streamtooth.js?v=202501141115"></script>
+
+  <link rel="stylesheet" type="text/css" href="/s/index.css?v=202501141115" media="screen">
+</head>
+
+<body>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+          apiKey: "AIzaSyCDJrtvNAr4Uc-Fg-89i05k7-nQ68BDOk4",
+          authDomain: "stream-tooth.firebaseapp.com",
+          projectId: "stream-tooth",
+          storageBucket: "stream-tooth.firebasestorage.app",
+          messagingSenderId: "907241132448",
+          appId: "1:907241132448:web:3f6a7812984c988e5794c5",
+          measurementId: "G-5STRD18BBS"
+        };
+  
+        // Initialize Firebase
+        let app = firebase.initializeApp(firebaseConfig);
+        let analytics = firebase.analytics();
+      
+        let features = [
+          'auth',
+          'database',
+          'firestore',
+          'functions',
+          'messaging',
+          'storage',
+          'analytics',
+          'remoteConfig',
+          'performance',
+        ].filter(feature => typeof app[feature] === 'function');
+      } catch (e) {
+        console.error(e);
+      }
+
+      // This fires on page load whether you're logged in or not
+      firebase.auth().onAuthStateChanged((user) => {
+
+        // If not logged in, then signInAnonymously
+        if (!user) {
+          firebase.auth().signInAnonymously()
+            .then(() => {
+              console.log("Signed in anonymously");
+              // Kick off StreamTooth
+              connect();
+            })
+            .catch((err) => { console.error(err); });
+        }
+        else {
+          console.log("Uid is " + user.uid);
+          // Kick off StreamTooth
+          connect();
+        }
+      });
+    });
+  </script>
+  <script>
+    const channel = (window.location.pathname.replace(/^\//, "") || 
+      window.location.hash.replace(/^#/, "") || "potate_oh_no");
+    var hasConnected = false;
+
+    async function connect() {
+      if (hasConnected)
+        return;
+
+      hasConnected = true;
+
+      //console.log("Starting...");
+      let db = await firebase.firestore();
+
+      let st = new StreamTooth(db, channel);
+      window.streamtooth = st;
+
+      st.setupUI();
+      st.startInputConnection();
+    }
+  </script>
+</body>
+
+</html>

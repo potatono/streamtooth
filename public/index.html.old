@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>StreamTooth</title>
 
+  <link rel="alternate" type="application/json+oembed" href="/oembed">
+
   <!-- update the version number as needed -->
   <script defer src="/__/firebase/11.1.0/firebase-app-compat.js"></script>
   <!-- include only the Firebase features as you need -->
@@ -23,15 +25,15 @@
   <script src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.2.nomodule.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vanjs-ui@0.11.4/dist/van-ui.nomodule.min.js"></script>
 
-  <script defer src="stbase.js"></script>
-  <script defer src="stconnection.js"></script>
-  <script defer src="stpeercriteria.js"></script>
-  <script defer src="stpeers.js"></script>
-  <script defer src="stmessages.js"></script>
-  <script defer src="stui.js"></script>
-  <script defer src="streamtooth.js"></script>
+  <script defer src="stbase.js?v=202501141115"></script>
+  <script defer src="stconnection.js?v=202501141115"></script>
+  <script defer src="stpeercriteria.js?v=202501141115"></script>
+  <script defer src="stpeers.js?v=202501141115"></script>
+  <script defer src="stmessages.js?v=202501141115"></script>
+  <script defer src="stui.js?v=202501141115"></script>
+  <script defer src="streamtooth.js?v=202501141115"></script>
 
-  <link rel="stylesheet" type="text/css" href="index.css" media="screen">
+  <link rel="stylesheet" type="text/css" href="index.css?v=202501141115" media="screen">
 </head>
 
 <body>
@@ -92,9 +94,9 @@
     });
   </script>
   <script>
-    const channel = window.location.hash.replace(/^#/, "") || "potate_oh_no";
+    const channel = (window.location.pathname.replace(/^\//, "") || 
+      window.location.hash.replace(/^#/, "") || "potate_oh_no");
     var hasConnected = false;
-
 
     async function connect() {
       if (hasConnected)

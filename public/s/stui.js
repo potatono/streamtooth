@@ -20,12 +20,23 @@ class STUI extends STBase {
     }
 
     setup() {
+        this.setupView();
         this.updateUserState(firebase.auth().currentUser);
         firebase.auth().onAuthStateChanged((user) => { this.updateUserState(user); });
 
-        let lo = this.computeLayout();
-        this.setupVideoWindow(lo);
-        this.setupInfoWindow(lo);
+        if (this.view == "embed") {
+            this.setupEmbedView();
+        }
+        else {
+            let lo = this.computeLayout();
+            this.setupVideoWindow(lo);
+            this.setupInfoWindow(lo);
+        }
+    }
+
+    setupView() {
+        var url = new URL(window.location.href);
+        this.view = url.searchParams.get("view") || "full";
     }
 
     computeLayout() {
@@ -65,6 +76,14 @@ class STUI extends STBase {
                 }, "×"),
                 video({ id: "main_video", controls: "controls", autoplay: "autoplay", muted: "muted" })
             )
+        ));
+    }
+
+    setupEmbedView() {
+        const { div, video } = van.tags;
+
+        van.add(document.body, div({ style: "width:100%;height:100%" },
+            video({ id: "main_video", controls: "controls", autoplay: "autoplay", muted: "muted" })
         ));
     }
 
@@ -218,6 +237,10 @@ class STUI extends STBase {
     }
 
     updatePeers(report) {
+        var peersEle = document.getElementById('peers');
+        // Peers tab does not appear in embedded view
+        if (!peersEle) return;
+
         var html = "<h3>Peer ID: " + report.peerId + "</h3>";
 
         html += "<h3>Peers</h3>";
@@ -226,7 +249,7 @@ class STUI extends STBase {
             html += this.getPeerHtml(peer);
         }
 
-        document.getElementById('peers').innerHTML = html;
+        peersEle.innerHTML = html;
     }
 
     sendChatOutbound(text) {
@@ -235,6 +258,8 @@ class STUI extends STBase {
 
     addChatMessage(msg) {
         var el = document.getElementById('chat_messages');
+        // Chat tab does not appear in embedded view
+        if (!el) return;
 
         // TODO FIXME Cross domain scripting issue
         el.innerHTML += `<div><span>${msg.displayName}:</span> ${msg.text}</div>`;

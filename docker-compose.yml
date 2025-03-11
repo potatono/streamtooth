@@ -1,0 +1,28 @@
+services:
+    stooth-web:
+        image: stooth-web:latest
+        container_name: stooth-web
+        hostname: stooth-web
+        build:
+          context: .
+          dockerfile: Dockerfile
+        ports:
+          - "5004:80"
+        volumes:
+          - ./public:/app/public
+          - ./functions/views:/app/functions/views
+          - ./functions/index.js:/app/functions/index.js
+          - ./server.js:/app/server.js
+          
+    #stooth-tunnel:
+    #    image: cloudflare/cloudflared:latest
+    #    container_name: stooth-tunnel
+    #    hostname: stooth-tunnel
+    #    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    #    environment:
+    #      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    #      - TUNNEL_HOSTNAME=dev.s2th.tv
+    #      - TUNNEL_PORT=5004
+    #    depends_on:
+    #      - stooth-web
+

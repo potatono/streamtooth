@@ -89,6 +89,7 @@ class STConnection extends STBase {
 
     async setup(stream) {
         this.connectionId = (new Date()).getTime();
+        this.stateChangeTime = (new Date()).getTime();
         this.remotePeerId = null;
         this.#iceCompleteDispatched = false;
 
@@ -157,6 +158,7 @@ class STConnection extends STBase {
 
     dispatchStateChange(ev) {
         //this.#remoteDescriptionSet = false;
+        this.stateChangeTime = (new Date()).getTime();
         this.dispatchEvent(new CustomEvent("stateChange", { "detail": ev }));
     }
 
@@ -301,5 +303,10 @@ class STConnection extends STBase {
         }
 
         return report;
+    }
+
+    isConnectingAndStale() {
+        return (this.connectionState == "connecting" &&
+            (new Date()).getTime() - this.stateChangeTime > 60000);
     }
 }

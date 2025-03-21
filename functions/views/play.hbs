@@ -5,7 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{channel}} - StreamTooth</title>
 
-  <link rel="alternate" type="application/json+oembed" href="https://s2th.tv/oembed/?url=https%3A%2F%2Fs2th.tv%2F{{channel}}&format=json">
+  <link rel="alternate" type="application/json+oembed" href="{{{oembedUrl}}}">
+
+  <meta property="og:site_name" content="{{siteName}}">
+  <meta property="og:description" content="{{description}}">
+  <meta name="twitter:description" content="{{description}}">
+  <meta itemprop="description" content="{{description}}">
+
+  <meta property="og:title" content="{{title}}">
+  <meta name="twitter:title" content="{{title}}">
+  <meta itemprop="name" content="{{title}}">
+
+  <meta property="og:type" content="video.other">
+  <meta property="og:url" content="{{{url}}}">
+  <link itemprop="url" href="{{{url}}}">
+
+  <meta property="og:video:type" content="text/html">
+  <meta property="og:video:url" content="{{{embedUrl}}}">
+  <meta property="og:video:secure_url" content="{{{embedUrl}}}">
+  <meta property="og:video:width" content="{{width}}">
+  <meta property="og:video:height" content="{{height}}">
+
+  <meta name="twitter:player" content="{{{embedUrl}}}">
+  <meta name="twitter:player:width" content="{{width}}">
+  <meta name="twitter:player:height" content="{{height}}">
+
+  <meta itemprop="width" content="{{width}}">
+  <meta itemprop="height" content="{{height}}">
+  
+  <meta property="og:image" content="{{{image}}}">
+  <meta name="twitter:image" content="{{{image}}}">
+
+  <meta name="twitter:card" content="player">
+
+  <meta itemprop="playerType" content="HTML5 Flash">
+  <link itemprop="embedUrl" href="{{{embedUrl}}}">
+
+  <script type="application/ld+json">{{{jsonld}}}</script>
 
   <!-- update the version number as needed -->
   <script defer src="https://www.gstatic.com/firebasejs/11.3.1/firebase-app-compat.js"></script>

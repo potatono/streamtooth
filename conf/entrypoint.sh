@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+export DEBUG="*"
+
 service nginx start
 
 #sleep infinity

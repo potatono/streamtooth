@@ -14,15 +14,15 @@ services:
           - ./functions/index.js:/app/functions/index.js
           - ./server.js:/app/server.js
           
-    #stooth-tunnel:
-    #    image: cloudflare/cloudflared:latest
-    #    container_name: stooth-tunnel
-    #    hostname: stooth-tunnel
-    #    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    #    environment:
-    #      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    #      - TUNNEL_HOSTNAME=dev.s2th.tv
-    #      - TUNNEL_PORT=5004
-    #    depends_on:
-    #      - stooth-web
+    stooth-tunnel:
+        image: cloudflare/cloudflared:latest
+        container_name: stooth-tunnel
+        hostname: stooth-tunnel
+        command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+        environment:
+          - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+          - TUNNEL_HOSTNAME=dev.s2th.tv
+          - TUNNEL_PORT=5004
+        depends_on:
+          - stooth-web
 
